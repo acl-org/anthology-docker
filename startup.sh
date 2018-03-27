@@ -24,17 +24,19 @@ sed -i "57c\
 \  database: ${PGSQL_DATABASE}" ${DATABASE_CONFIG}
 sed -i "58c\
 \  host: ${PGSQL_HOST}" ${DATABASE_CONFIG}
-sed -i "61c\
+sed -i "59c\
 \  username: ${PGSQL_USER}" ${DATABASE_CONFIG}
-sed -i "62c\
+sed -i "60c\
 \  password: ${PGSQL_PASS}" ${DATABASE_CONFIG}
 
+cat ${DATABASE_CONFIG}
 # Pull the latest version of the code - this should not overwrite the files
 # we've just edited.
 cd /home/acl
 git pull
 
 # Start the services
+export RAILS_ENV=production
 cd /home/acl/jetty
 java -jar start.jar &
 cd /home/acl
