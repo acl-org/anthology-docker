@@ -34,9 +34,6 @@ sed -i "62c\
 cd /home/acl
 git pull
 
-ping -c 3 134.96.104.204
-ping -c 3 ${PGSQL_HOST}
-
 # Start the services
 cd /home/acl/jetty
 java -jar start.jar &

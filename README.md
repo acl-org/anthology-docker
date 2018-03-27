@@ -37,8 +37,8 @@ has write permissions.
 Start your Docker container the following way:
 
 ```
-docker run <container_name> --env-file ./params.env -p 8080:80 \
-       -v /var/papers:your_paper_dir
+docker run --env-file ./params.env -p 8080:80 \
+       -v your_paper_dir:/var/papers <container_name>
 ```
 
 
