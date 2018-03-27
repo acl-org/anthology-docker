@@ -3,6 +3,7 @@
 SOLR_CONFIG=/home/acl/jetty/solr/blacklight-core/conf/data-config.xml
 JETTY_CONFIG=/home/acl/jetty/etc/jetty.xml
 DATABASE_CONFIG=/home/acl/config/database.yml
+export RAILS_ENV=production
 
 # Update username, password, and database for Solr and Jetty in its config files
 # This script changes the 4th line to the content on the next line. Please note:
@@ -19,7 +20,7 @@ sed -i "6c\
 sed -i "80c\
 \                                 <Arg>127.0.0.1</Arg>" ${JETTY_CONFIG}
 
-# Same for the database info
+# Here comes the production database info
 sed -i "57c\
 \  database: ${PGSQL_DATABASE}" ${DATABASE_CONFIG}
 sed -i "58c\
@@ -29,39 +30,57 @@ sed -i "59c\
 sed -i "60c\
 \  password: ${PGSQL_PASS}" ${DATABASE_CONFIG}
 
-cat ${DATABASE_CONFIG}
-# Pull the latest version of the code - this should not overwrite the files
-# we've just edited.
-cd /home/acl
-git pull
+# If this is the first time running this container,
+# create the database
+if ${POPULATE_DB}
+then
+	rake db:drop
+	rake db:create
+	rake db:migrate
+	cd /home/acl/import
+	for file in *xml
+	do
+		name=`basename -s .xml $file`
+		rake import:xml[true,$name]
+	done > /dev/null
+fi
 
 # Start the services
-export RAILS_ENV=production
 cd /home/acl/jetty
 java -jar start.jar &
+rake acl:reindex_solr
 cd /home/acl
 rails server -p 80 &
 
-# At startup time, the server will perform the following tasks:
-#  - Rebuild the database
-#  - Download missing PDFs (if any)
-#  - Export all papers to Bibtex and similar formats
-# These tasks can take as long as they want, while the server should be running
-# fine in the meantime
+# Now, the container starts an infinite loop.
+# It will perform the following tasks:
+#  1. Pull the latest version of the code from Github
+#  2. Download missing PDFs (if any)
+#  3. Export all papers to Bibtex and similar formats
+#  4. Sleep for 24hs
+# These tasks can take as long as they want, because the server should be
+# running fine
 
-# Step 1: rebuild the database
-
-
-# Step 2: Re-export the papers
 cd /home/acl
-for file in import/*xml
+while true
 do
-      volume=`grep '<volume id' $file | sed 's/.*volume id=.\(.*\).>.*/\1/'`
-      for paper in `grep "paper id" $file | sed 's/.*id=.\([0-9]\+\).*/\1/'`
-      do
-              rake export:all_papers[${volume}-${paper}]
-      done
+	# 1. Pull the latest version of the code
+	git pull
+
+	# 2. Download missing PDFs
+	# TBA
+
+	# 3: Export all papers
+	cd /home/acl
+	for file in import/*xml
+	do
+	      volume=`grep '<volume id' $file | sed 's/.*volume id=.\(.*\).>.*/\1/'`
+	      for paper in `grep "paper id" $file | sed 's/.*id=.\([0-9]\+\).*/\1/'`
+	      do
+	              rake export:all_papers[${volume}-${paper}]
+	      done
+	done
+
+	# 4. Send the loop to sleep for 24hs
+	sleep 1d 
 done
-
-
-# Step 3: Re-download the PDFs
