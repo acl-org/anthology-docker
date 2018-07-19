@@ -34,6 +34,7 @@ sed -i "60c\
 # create the database
 if ${POPULATE_DB}
 then
+	echo "Populating db"
 	rake db:drop
 	rake db:create
 	rake db:migrate
@@ -46,6 +47,8 @@ then
 fi
 
 # Start the services
+cd /home/acl
+RAILS_ENV=production bundle exec rake assets:precompile
 cd /home/acl/jetty
 java -jar start.jar &
 rake acl:reindex_solr
