@@ -45,6 +45,10 @@ then
 	done > /dev/null
 fi
 
+# Compile assets
+cd /home/acl
+RAILS_ENV=production bundle exec rake assets:precompile
+
 # Start the services
 cd /home/acl/jetty
 java -jar start.jar &
