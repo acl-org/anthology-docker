@@ -29,6 +29,10 @@ Security advice: the user PGSQL_USER needs write access to PGSQL_DATABASE.
 We encourage you to create a restricted user with no access to any other
 database in the same host.
 
+The default configuration options connect this Docker image to a read-only
+remote database. This database is provided only to simplify the initial setup,
+but you should not rely on it. We strongly encourage you to set your own local
+database server, and update your configuration.
 
 ## Step 2: allocate data resources
 
